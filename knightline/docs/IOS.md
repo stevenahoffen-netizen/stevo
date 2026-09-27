@@ -23,7 +23,7 @@ No Mac? Build in the cloud: Codemagic (500 free macOS minutes a month) or GitHub
 
 Apple rejects "repackaged websites" under Guideline 4.2, so the app must work fully offline and feel native:
 
-- **Bundle the fonts** instead of loading Google Fonts: `npm i @fontsource/figtree @fontsource/ibm-plex-mono @fontsource/young-serif`, import them in `src/main.tsx`, and remove the `<link>` in `index.html`.
+- **Fonts** are already bundled (`src/fonts.css`, woff2 from `@fontsource`), so the app makes no network requests.
 - **Haptics:** swap `src/game/haptics.ts` to `@capacitor/haptics` (web vibration doesn't exist on iOS).
 - **Storage:** move `src/game/storage.ts` to `@capacitor/preferences` so iOS doesn't clear progress under storage pressure.
 - **Daily reminder:** a local notification at a time the player picks ("Today's Knightline is ready"). Ask for permission only after the first solve, never on launch.

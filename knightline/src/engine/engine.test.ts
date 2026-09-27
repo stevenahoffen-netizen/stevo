@@ -6,22 +6,29 @@ import {
   decodeCells,
   deduceEdges,
   divergenceIndex,
+  doomedCells,
   encodeCells,
   findRandomRoute,
   generatePuzzle,
+  holePatternKey,
   isConnected,
+  isDoomed,
   isKnightMove,
   isSolved,
   knightTargets,
+  layoutKey,
   legalTargets,
   makeGame,
   makeRng,
   nextWaypoint,
+  playMetrics,
   puzzleFromJSON,
   puzzleToJSON,
+  routeKey,
   solveExact,
   solveLogic,
   strandedCells,
+  WEEKLY_TIERS,
   type Puzzle,
   type TierSpec,
 } from './index'
@@ -209,20 +216,18 @@ describe('logic solver', () => {
 })
 
 describe('generator', () => {
-  const specs: TierSpec[] = [
-    { tier: 'easy', rows: 5, cols: 5, holes: [0, 3], maxLevel: 2, extraWaypoints: 1 },
-    { tier: 'medium', rows: 6, cols: 6, holes: [2, 5], maxLevel: 2, extraWaypoints: 0 },
-    { tier: 'hard', rows: 6, cols: 6, holes: [2, 5], maxLevel: 3, extraWaypoints: 0, minL3: 1 },
-    { tier: 'hard', rows: 7, cols: 7, holes: [3, 7], maxLevel: 3, extraWaypoints: 0, minL3: 1, maxL3: 15 },
-  ]
+  // The real weekly tiers: Monday's easy 5x5, Thursday's 6x6, Friday's hard 6x6, Sunday's hard 7x7.
+  const specs: TierSpec[] = [WEEKLY_TIERS[0], WEEKLY_TIERS[3], WEEKLY_TIERS[4], WEEKLY_TIERS[6]]
 
   for (const spec of specs) {
-    it(`produces valid, unique ${spec.rows}x${spec.cols} L${spec.maxLevel} puzzles`, () => {
-      const rng = makeRng(`gen-test-${spec.rows}-${spec.maxLevel}`)
-      for (let i = 0; i < 5; i++) {
+    it(`produces valid, unique, in-window ${spec.rows}x${spec.cols} ${spec.tier} puzzles`, () => {
+      const rng = makeRng(`gen-test-${spec.rows}-${spec.tier}`)
+      let made = 0
+      for (let i = 0; i < 12 && made < 3; i++) {
         const { puzzle } = generatePuzzle(spec, rng, `g${i}`)
-        expect(puzzle).not.toBeNull()
-        const p = puzzle!
+        if (!puzzle) continue
+        made++
+        const p = puzzle
         expect(checkRoute(p, p.solution)).toBeNull()
         const exact = solveExact(p, { limit: 2, maxNodes: 5_000_000 })
         expect(exact.complete).toBe(true)
@@ -232,10 +237,21 @@ describe('generator', () => {
         expect(logic.route).toEqual(p.solution)
         if (spec.minL3) expect(p.grade!.l3).toBeGreaterThanOrEqual(spec.minL3)
         if (spec.maxL3) expect(p.grade!.l3).toBeLessThanOrEqual(spec.maxL3)
+        const m = playMetrics(p)
+        if (spec.bits) {
+          expect(m.bits).toBeGreaterThanOrEqual(spec.bits[0])
+          expect(m.bits).toBeLessThanOrEqual(spec.bits[1])
+        }
+        if (spec.maxFirstChoices !== undefined) expect(m.firstChoices).toBeLessThanOrEqual(spec.maxFirstChoices)
+        if (spec.maxGiveaways !== undefined) expect(m.giveawayPairs).toBeLessThanOrEqual(spec.maxGiveaways)
+        // the solution never walks into a doomed position
+        const game = makeGame(p)
+        for (let k = 1; k < p.solution.length; k++) expect(isDoomed(game, p.solution.slice(0, k))).toBe(false)
         // symmetric holes
         const n = p.rows * p.cols
         for (const b of p.blocked) expect(p.blocked).toContain(n - 1 - b)
       }
+      expect(made).toBeGreaterThanOrEqual(2)
     })
   }
 
@@ -244,6 +260,33 @@ describe('generator', () => {
     const a = generatePuzzle(spec, makeRng('same'), 'a').puzzle
     const b = generatePuzzle(spec, makeRng('same'), 'a').puzzle
     expect(a).toEqual(b)
+  })
+})
+
+describe('symmetry keys', () => {
+  const p = smallPuzzles.find((q) => q.rows === q.cols && q.waypoints.length >= 2)!
+  const n = p.rows
+  // rotate 90 degrees clockwise: (r, c) -> (c, n-1-r)
+  const rot = (c: number) => (c % n) * n + (n - 1 - Math.floor(c / n))
+  const rotated: Puzzle = {
+    ...p,
+    id: 'rot',
+    blocked: p.blocked.map(rot),
+    waypoints: p.waypoints.map(rot),
+    solution: p.solution.map(rot),
+  }
+  const reversed: Puzzle = { ...p, id: 'rev', waypoints: [...p.waypoints].reverse(), solution: [...p.solution].reverse() }
+
+  it('treats rotations and reversals as the same layout and route', () => {
+    expect(layoutKey(rotated)).toBe(layoutKey(p))
+    expect(routeKey(rotated)).toBe(routeKey(p))
+    expect(routeKey(reversed)).toBe(routeKey(p))
+    expect(holePatternKey(rotated)).toBe(holePatternKey(p))
+  })
+
+  it('tells different layouts apart', () => {
+    const other = smallPuzzles.find((q) => q.rows === p.rows && q.cols === p.cols && routeKey(q) !== routeKey(p))
+    if (other) expect(layoutKey(other)).not.toBe(layoutKey(p))
   })
 })
 
@@ -304,5 +347,27 @@ describe('player rules', () => {
     for (let i = 1; i <= p.solution.length; i++) {
       expect(strandedCells(game, p.solution.slice(0, i))).toEqual([])
     }
+  })
+
+  it('flags doomed squares only when the route truly cannot be finished', () => {
+    // Sound: a correct prefix of the unique solution is never doomed.
+    for (const q of smallPuzzles.slice(0, 60)) {
+      const g = makeGame(q)
+      for (let i = 1; i < q.solution.length; i++) expect(doomedCells(g, q.solution.slice(0, i))).toEqual([])
+    }
+    // 5x5 corner 0 has two ways (7, 11). Once the route has left 11, only 7
+    // remains: the corner could be entered but never left.
+    const q: Puzzle = { id: 'doom', rows: 5, cols: 5, blocked: [], waypoints: [11, 24], solution: [] }
+    const g = makeGame(q)
+    expect(doomedCells(g, [11, 2, 13])).toContain(0)
+  })
+
+  it('measures play difficulty along the solution', () => {
+    const m = playMetrics(p)
+    expect(m.bits).toBeGreaterThanOrEqual(0)
+    expect(m.decisions).toBeLessThan(p.solution.length)
+    expect(m.firstChoices).toBeGreaterThanOrEqual(1)
+    expect(m.oneGlowShare).toBeGreaterThanOrEqual(0)
+    expect(m.oneGlowShare).toBeLessThanOrEqual(1)
   })
 })

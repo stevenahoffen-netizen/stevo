@@ -35,35 +35,46 @@ Two solvers, both in `src/engine`:
 
 ## Generator
 
-1. Pick blocked squares (180-degree rotational symmetry, looks designed), check the knight graph is connected and color parity allows a full path.
-2. Find a random full route (randomized Warnsdorff search with backtracking).
+1. Pick blocked squares (180-degree rotational symmetry, looks designed). Reject boards with a square that has one jump or fewer, or where too many squares have only two (the board would solve itself).
+2. Find a random full route (randomized Warnsdorff search with backtracking; the greedy rule is applied 70% of the time so routes vary). The two ends must be far apart: not adjacent, not a knight's jump apart.
 3. Waypoints start as just 1 and K. While the logic solver (at the target technique level) cannot finish: if the exact solver finds a different route, add a waypoint where the two routes diverge; otherwise add one in the most undetermined region.
-4. Prune: try removing each intermediate waypoint; keep it removed if the puzzle stays solvable at the target level. Easy tiers keep a few extra waypoints.
-5. Grade and accept if inside the tier's target window; otherwise retry.
+4. Prune: try removing each intermediate waypoint, giveaways first (consecutive numbers one jump apart), then latest first; keep it removed if the puzzle stays solvable at the target level. Easy tiers then add back a bonus number or two where it removes the least guessing.
+5. Measure play difficulty and accept only inside the tier's window (below); otherwise retry.
+
+### Play difficulty
+
+Logic grades say what a solver *needs*; they don't say what a person *feels*. So every puzzle is also measured by walking its solution the way a careful player would:
+
+- **bits**: at each step, count the glowing squares that don't instantly create a dead end (see the dead-end rule below) and add log2 of that count. 0 bits is a corridor; each bit is one coin-flip a player has to reason out.
+- **first choices**: viable options on the very first jump (kept at 2-3 so the opening isn't a guess).
+- **giveaways**: numbers k and k+1 one jump apart (a free move, capped per tier).
+- **number density**: numbers as a share of squares (too many turns the puzzle into connect-the-dots).
+
+Content rules across the whole calendar: no layout ever repeats (up to rotation, reflection and reversal), a route doesn't come back within 12 weeks, and no hole pattern takes more than about 12% of a board size's days (5x5 boards have few viable patterns, so they may exceed it; layouts still never repeat).
 
 ## Difficulty curve (local date, like Wordle)
 
-| Day | Board | Tier | Logic allowed |
-|---|---|---|---|
-| Mon | 5x5 | Easy | L1-L2, extra waypoints |
-| Tue | 5x5 | Medium | L1-L2 |
-| Wed | 6x6 | Easy | L1-L2, extra waypoints |
-| Thu | 6x6 | Medium | L1-L2 |
-| Fri | 6x6 | Hard | L1-L3 |
-| Sat | 7x7 | Medium | L1-L2 |
-| Sun | 7x7 | Hard | L1-L3 |
+| Day | Board | Tier | Logic allowed | Bits |
+|---|---|---|---|---|
+| Mon | 5x5 | Easy | L1-L2, 1 bonus number | 3-7 |
+| Tue | 5x5 | Medium | L1-L3 (light) | 6-10 |
+| Wed | 6x6 | Easy | L1-L2, 2 bonus numbers | 6-10 |
+| Thu | 6x6 | Medium | L1-L2 | 9-14 |
+| Fri | 6x6 | Hard | L1-L3 | 11-17 |
+| Sat | 7x7 | Medium | L1-L2 | 14-20 |
+| Sun | 7x7 | Hard | L1-L3 | 18-28 |
 
 Numbering: puzzle #1 is `EPOCH` (config). Content is pre-generated and validated offline, then bundled as JSON, so the app needs no server and works offline.
 
 ## Interaction
 
-- Tap a glowing square to jump there. The route is drawn as straight lines between square centers; visited squares show their step number.
-- Tap any earlier square on your route to rewind to it (counts as a backtrack). Undo steps back one. Restart clears the route.
-- Illegal taps explain themselves: "Not a knight's jump", "Visit 3 first", "Finish here last".
-- **Stranded warning**: an unvisited square with no remaining way in turns red. This is instant feedback a human would find tedious to compute, and it prevents long doomed routes without giving away the answer.
-- Hints: if your route matches the solution so far, a hint highlights the next square. If it went wrong, the hint shows where it went off course and offers to rewind there.
+- Tap a glowing square to jump there (open squares show a brass dot, numbers get a brass ring). The route is drawn as straight lines between square centers, recent jumps bold and older ones fading. Move numbers on visited squares are an option in Settings.
+- Tap any earlier square on your route to rewind to it (counts as a backtrack); the status line says "Rewound 3 moves." with an Undo link that brings the route back. Undo steps back one. Restart clears the route (also undoable). Keyboard: U or Backspace undoes, H asks for a hint.
+- Illegal taps explain themselves inline in the status line: "Knights jump in an L", "Reach 3 first", "Cover every other square first".
+- **Dead-end warning**: an unvisited square with no way left, or (other than the finish) with only one way left so it could be entered but never left, turns red with an X. This is the corner rule applied instantly: it's sound (it never fires on a route that can still be finished), it catches most wrong turns the moment they happen, and it never gives away the right move.
+- Hints: if your route matches the solution so far, a hint highlights the next square. If it went wrong, the hint highlights the last good square and offers to rewind there.
 - Optional assist (Settings): show the number of remaining exits on each open square.
-- Timer starts on the first jump and pauses when the tab is hidden. Progress is saved locally and resumes.
+- Timer starts on the first jump and pauses when the tab is hidden or a menu is open. Progress is saved locally and resumes. If the page stays open past midnight, an untouched daily moves to the new day; a started one stays put, with a link to the new puzzle.
 
 ## Share card (spoiler-free)
 
@@ -71,14 +82,14 @@ Numbering: puzzle #1 is `EPOCH` (config). Content is pre-generated and validated
 Knightline #12 ♞ Fri 6×6
 ⏱ 2:14 · 3 backtracks · no hints
 🟩🟩🟨🟥🟩
-https://knightline.app/#c=12.21.40.95.121.134
+https://knightline.app/#r12.21.40.95.121.134
 ```
 
 The five squares are split times: the route is cut into five equal parts and each square shows whether that part was quick (🟩), average (🟨) or slow (🟥) relative to your own pace. It tells a story ("stuck in the middle") without revealing any moves.
 
 ## Challenge link (ghost race)
 
-The link carries only the puzzle number and five cumulative split times. A friend who opens it sees a ghost progress bar racing them in real time, then a result ("You beat Alex's time by 0:12"). Never moves, never the route. Uses the URL hash so it works on any static host.
+The link carries only the puzzle number and five cumulative split times (whole seconds, rounded down like the clock). A friend who opens it sees a ghost progress bar racing them in real time, then a result ("You beat your friend's 2:14 by 0:12", or a dead heat). Never moves, never the route. It uses a plain URL hash token (`#r<number>.<s1>...<s5>`, letters, digits and dots only) so it works on any static host, including sandboxed ones that drop `key=value` hashes. The app clears the token after reading it so a reload doesn't replay the race. First-time visitors from a race link get a short "You've been challenged" welcome; a link to a puzzle that isn't out yet says when it unlocks; a link to a puzzle you already solved goes straight to the verdict.
 
 ## Streaks (forgiving)
 

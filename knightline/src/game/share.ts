@@ -12,9 +12,26 @@ export interface Challenge {
   splits: [number, number, number, number, number]
 }
 
+/** Whole seconds, rounded down like the clock, so both players see the same time. */
+export function toSeconds(ms: number): number {
+  return Math.max(0, Math.floor(ms / 1000))
+}
+
 export function encodeChallenge(number: number, splitsMs: readonly number[]): string {
-  const secs = splitsMs.map((ms) => Math.max(0, Math.round(ms / 1000)))
+  const secs = splitsMs.map(toSeconds)
+  // A valid link needs a positive finishing time.
+  secs[4] = Math.max(1, secs[4])
+  for (let i = 3; i >= 0; i--) secs[i] = Math.min(secs[i], secs[i + 1])
   return `r${number}.${secs.join('.')}`
+}
+
+export type RaceOutcome = { kind: 'won' | 'lost'; diffSec: number } | { kind: 'tie' }
+
+export function raceOutcome(ch: Challenge, myMs: number): RaceOutcome {
+  const mine = toSeconds(myMs)
+  const theirs = ch.splits[4]
+  if (mine === theirs) return { kind: 'tie' }
+  return mine < theirs ? { kind: 'won', diffSec: theirs - mine } : { kind: 'lost', diffSec: mine - theirs }
 }
 
 export function decodeChallenge(hash: string): Challenge | null {

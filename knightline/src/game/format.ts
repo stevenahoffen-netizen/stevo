@@ -32,3 +32,18 @@ export function squareName(cell: number, rows: number, cols: number): string {
 export function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? '' : 's'}`
 }
+
+/** Spoken name for a square: "column C, row 3" (rows counted from the bottom). */
+export function squareLabel(cell: number, rows: number, cols: number): string {
+  const r = Math.floor(cell / cols)
+  const c = cell % cols
+  return `column ${String.fromCharCode(65 + c)}, row ${rows - r}`
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** "Sep 27" from YYYY-MM-DD */
+export function shortDate(day: string): string {
+  const [, m, d] = day.split('-').map(Number)
+  return `${MONTHS[m - 1]} ${d}`
+}

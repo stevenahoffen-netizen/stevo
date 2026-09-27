@@ -31,11 +31,14 @@ export async function openOn(page: Page, day: string, path = '/', opts: { skipIn
 
 export const cell = (page: Page, c: number) => page.getByTestId(`cell-${c}`)
 
+/** A control-row button (the status line can carry its own Undo link). */
+export const control = (page: Page, name: string) => page.locator('.controls').getByRole('button', { name })
+
 /** Taps the route from index `from` to `to` (exclusive). */
 export async function tapRoute(page: Page, route: number[], from = 1, to = route.length) {
   for (let i = from; i < to; i++) await cell(page, route[i]).click()
 }
 
 export async function expectMoves(page: Page, n: number, total: number) {
-  await expect(page.getByTestId('moves')).toHaveText(`Move ${n}/${total}`)
+  await expect(page.getByTestId('moves')).toHaveText(`${n}/${total} squares`)
 }

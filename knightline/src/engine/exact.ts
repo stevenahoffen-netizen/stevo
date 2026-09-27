@@ -46,6 +46,8 @@ class Search {
     readonly limit: number,
     readonly maxNodes: number,
     readonly rng?: Rng,
+    /** chance of using Warnsdorff ordering at each step (1 = always) */
+    readonly greedy = 1,
   ) {
     const { graph } = spec
     this.M = graph.size
@@ -167,8 +169,11 @@ class Search {
     }
     if (forced >= 0 && candidates.length === 0) return
     if (this.rng) this.rng.shuffle(candidates)
-    // Warnsdorff: try the most constrained square first.
-    candidates.sort((a, b) => this.deg[a] - this.deg[b])
+    // Warnsdorff: try the most constrained square first. Random route
+    // generation skips it sometimes so routes aren't greedy-predictable.
+    if (this.greedy >= 1 || !this.rng || this.rng.next() < this.greedy) {
+      candidates.sort((a, b) => this.deg[a] - this.deg[b])
+    }
 
     for (const u of candidates) {
       this.visit(u)
@@ -219,6 +224,7 @@ export function findRandomRoute(
   rng: Rng,
   maxNodesPerStart = 20_000,
   starts = 12,
+  greedy = 1,
 ): number[] | null {
   const graph = buildGraph(rows, cols, blocked)
   const counts = [0, 0]
@@ -232,7 +238,7 @@ export function findRandomRoute(
   rng.shuffle(candidates)
   const wp = new Int16Array(graph.size).fill(-1)
   for (const { node } of candidates.slice(0, starts)) {
-    const search = new Search({ graph, start: node, end: -1, wp, wpCount: 0 }, 1, maxNodesPerStart, rng)
+    const search = new Search({ graph, start: node, end: -1, wp, wpCount: 0 }, 1, maxNodesPerStart, rng, greedy)
     search.run()
     if (search.solutions.length) return search.solutions[0].map((n) => graph.cellOf[n])
   }

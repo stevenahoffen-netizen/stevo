@@ -3,6 +3,11 @@
 
 const PREFIX = 'knightline:v1:'
 
+/** The raw localStorage key, for matching storage events from other tabs. */
+export function storageKey(key: string): string {
+  return PREFIX + key
+}
+
 export function load<T>(key: string, fallback: T): T {
   try {
     const raw = globalThis.localStorage?.getItem(PREFIX + key)

@@ -6,10 +6,13 @@ export interface Settings {
   sound: boolean
   haptics: boolean
   showExits: boolean
+  /** small move numbers on visited squares */
+  showSteps: boolean
   theme: ThemeChoice
 }
 
-export const DEFAULT_SETTINGS: Settings = { sound: true, haptics: true, showExits: false, theme: 'system' }
+// Web daily puzzles are silent by default (NYT, LinkedIn); sound is opt-in.
+export const DEFAULT_SETTINGS: Settings = { sound: false, haptics: true, showExits: false, showSteps: false, theme: 'system' }
 
 export function loadSettings(): Settings {
   return { ...DEFAULT_SETTINGS, ...load<Partial<Settings>>('settings', {}) }

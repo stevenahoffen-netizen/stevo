@@ -1,7 +1,7 @@
 // Packs the production build into one self-contained HTML body for hosts that
 // wrap pages in their own <html>/<head>/<body> (e.g. a Claude artifact):
-// inline CSS + JS, keep <title> and the font link, no external files.
-//   npx vite build && npx tsx scripts/build-artifact.ts [out.html]
+// inline CSS + JS (fonts arrive as data URIs), no external files.
+//   KL_INLINE=1 npx vite build && npx tsx scripts/build-artifact.ts [out.html]
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 
@@ -18,17 +18,21 @@ const js = readFileSync(resolve(dist, 'assets', jsFiles[0]), 'utf8')
   .replace(/<\/script/gi, '<\\/script')
   .replace(/<!--/g, '<\\!--')
 
-const fontLink = /<link[^>]+fonts\.googleapis\.com\/css2[^>]*>/.exec(html)?.[0]
-if (!fontLink) throw new Error('font link not found in dist/index.html')
+// Anything the page would still fetch from dist/ breaks once it's a single file.
+const external = /url\((?!['"]?data:)[^)]*\.(woff2?|ttf|png|svg)/.exec(css)
+if (external) throw new Error(`CSS still references a file (${external[0]}); build with KL_INLINE=1`)
+const desc = /<meta name="description" content="([^"]*)"/.exec(html)?.[1]
 
 const page = [
   '<title>Knightline</title>',
-  fontLink,
+  desc ? `<meta name="description" content="${desc}" />` : '',
   `<style>\n${css}\n</style>`,
   '<div id="root"></div>',
   `<script type="module">\n${js}\n</script>`,
   '',
-].join('\n')
+]
+  .filter(Boolean)
+  .join('\n')
 
 mkdirSync(dirname(out), { recursive: true })
 writeFileSync(out, page)
