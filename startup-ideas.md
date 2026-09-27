@@ -18,7 +18,7 @@
 Whichever gets 2+ *paid* orders first gets your semester. Everything else waits.
 
 **Four things that apply to almost every idea.**
-- **Visa status.** If you're on an F-1 visa, nearly everything here (client services, freelancing) counts as unauthorized employment. Talk to the Harvard International Office before you earn a dollar. If you're a US citizen or green-card holder, skip this one.
+- **Taxes and aid.** Once you net $400+ a year, you owe self-employment tax (about 15.3%) plus income tax, so set aside 25-30% of profit and track expenses. If you're on financial aid, business income counts as student income on next year's FAFSA and CSS Profile, so check with the aid office before it gets meaningful. (The F-1 caveats inside individual entries don't apply to you as a citizen.)
 - **Harvard's name.** "A Harvard student" as a bio line is fine. Harvard in a brand name, logo or domain is not. Don't pitch through House or club email lists without permission either.
 - **Legal hygiene eats the budget.** The B2B finance ideas want an LLC (Massachusetts charges $500/yr), an engagement letter capping your liability at the fee, and eventually E&O insurance ($500-1,500/yr). That's most of $1,500. Start with the engagement letter and add the rest once revenue justifies it.
 - **The calendar.** Grant deadlines, SBA closings, NLE season and HOA budget season don't pause for finals. Every service here needs a published turnaround time and blackout weeks from day one.

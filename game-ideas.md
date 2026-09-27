@@ -27,7 +27,7 @@
 **Assumptions baked in** (tell me if any are wrong):
 - Faceless screen-recorded clips are fine.
 - You have, or can borrow, an iPhone to test on. A Mac helps, and cloud builds work around not having one.
-- The visa question from last time still applies to any income.
+- Taxes still apply: once you net $400+ a year you owe self-employment tax (about 15.3%), so set aside 25-30% of profit. If you're on financial aid, check how business income affects next year's package.
 
 ## At a glance
 
