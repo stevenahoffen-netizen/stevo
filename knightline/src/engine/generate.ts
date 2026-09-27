@@ -31,6 +31,12 @@ export interface TierSpec {
   maxFirstChoices?: number
   /** max pairs of consecutive numbers one jump apart */
   maxGiveaways?: number
+  /** longest run of single-choice steps, as a fraction of the route (default 0.4) */
+  maxForcedRun?: number
+  /** allow start and finish to touch or sit a jump apart (tiny tutorial boards) */
+  allowCloseEnds?: boolean
+  /** max share of squares with exactly two jumps on boards of 20+ squares (default 0.4) */
+  maxTwoJumpShare?: number
 }
 
 /** Picks blocked squares with 180-degree rotational symmetry. */
@@ -59,7 +65,7 @@ export function pickHoles(rows: number, cols: number, count: number, rng: Rng): 
  * single jump (it would have to be the start or finish, a giveaway), and not
  * so many two-jump squares that the route is mostly forced.
  */
-export function boardIsViable(rows: number, cols: number, blocked: readonly number[]): boolean {
+export function boardIsViable(rows: number, cols: number, blocked: readonly number[], maxTwoJumpShare = 0.4): boolean {
   const graph = buildGraph(rows, cols, blocked)
   if (graph.size < 4 || !isConnected(graph)) return false
   if (graph.adj.some((a) => a.length <= 1)) return false
@@ -68,7 +74,7 @@ export function boardIsViable(rows: number, cols: number, blocked: readonly numb
   if (Math.abs(counts[0] - counts[1]) > 1) return false
   if (rows * cols >= 20) {
     const twoJump = graph.adj.filter((a) => a.length === 2).length
-    if (twoJump / graph.size > 0.4) return false
+    if (twoJump / graph.size > maxTwoJumpShare) return false
   }
   return true
 }
@@ -149,7 +155,7 @@ export function generatePuzzle(
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const holeCount = spec.holes[0] + rng.int(spec.holes[1] - spec.holes[0] + 1)
     const blocked = pickHoles(rows, cols, holeCount, rng)
-    if (!boardIsViable(rows, cols, blocked)) {
+    if (!boardIsViable(rows, cols, blocked, spec.maxTwoJumpShare)) {
       reject('board')
       continue
     }
@@ -159,7 +165,7 @@ export function generatePuzzle(
       continue
     }
     const M = route.length
-    if (!endpointsApart(cols, route[0], route[M - 1])) {
+    if (!spec.allowCloseEnds && !endpointsApart(cols, route[0], route[M - 1])) {
       reject('endpoints')
       continue
     }
@@ -276,7 +282,7 @@ export function generatePuzzle(
       reject('giveaway')
       continue
     }
-    if (m.longestForcedRun > 0.4 * M) {
+    if (m.longestForcedRun > (spec.maxForcedRun ?? 0.4) * M) {
       reject('forced-run')
       continue
     }

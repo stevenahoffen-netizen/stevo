@@ -32,7 +32,10 @@ export const PRACTICE_TIERS: Record<'5' | '6' | '7', TierSpec> = {
 
 /** Tutorial boards. Candidates are filtered for teaching quality in scripts/generate-content.ts. */
 export const TUTORIAL_TIERS: readonly TierSpec[] = [
-  { tier: 'easy', rows: 3, cols: 4, holes: [0, 0], maxLevel: 2, extraWaypoints: 0 },
+  // Lesson 1 teaches the jump itself: forced moves and close ends are fine here.
+  { tier: 'easy', rows: 3, cols: 4, holes: [0, 0], maxLevel: 2, extraWaypoints: 0, maxForcedRun: 1, allowCloseEnds: true },
   { tier: 'easy', rows: 4, cols: 5, holes: [0, 2], maxLevel: 2, extraWaypoints: 0 },
-  { tier: 'easy', rows: 5, cols: 5, holes: [0, 0], maxLevel: 2, extraWaypoints: 0 },
+  // Lesson 3 blocks four squares so the route has to choose a corner while
+  // wrong turns show up fast; an open 5x5 has too many choices.
+  { tier: 'easy', rows: 5, cols: 5, holes: [4, 4], maxLevel: 2, extraWaypoints: 0, maxTwoJumpShare: 1 },
 ]
