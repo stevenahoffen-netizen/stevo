@@ -14,7 +14,9 @@
     "test:e2e": "playwright test",
     "content:generate": "tsx scripts/generate-content.ts",
     "content:validate": "tsx scripts/validate-content.ts",
-    "content:report": "tsx scripts/report.ts"
+    "content:report": "tsx scripts/report.ts",
+    "build:artifact": "vite build && tsx scripts/build-artifact.ts",
+    "icons": "tsx scripts/render-icons.ts"
   },
   "dependencies": {
     "react": "^19.3.0",

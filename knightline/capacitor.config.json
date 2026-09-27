@@ -1,0 +1,9 @@
+{
+  "appId": "app.knightline.game",
+  "appName": "Knightline",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0f131b"
+  }
+}
