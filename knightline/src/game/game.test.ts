@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { computeStreak } from './stats'
-import { decodeChallenge, encodeChallenge, ghostProgress, paceEmoji, shareText, splitThresholds } from './share'
-import { formatTime, squareName } from './format'
+import {
+  decodeChallenge,
+  encodeChallenge,
+  ghostProgress,
+  paceEmoji,
+  raceOutcome,
+  shareText,
+  splitThresholds,
+} from './share'
+import { formatTime, shortDate, squareLabel, squareName } from './format'
 import { addDays } from '../data/schedule'
 
 const run = (start: string, n: number) => Array.from({ length: n }, (_, i) => addDays(start, i))
@@ -63,6 +71,22 @@ describe('challenge links', () => {
   })
 })
 
+describe('race verdicts', () => {
+  const ch = decodeChallenge('#r8.20.41.60.80.100')!
+
+  it('compares whole seconds, like the clock shows', () => {
+    expect(raceOutcome(ch, 100_900)).toEqual({ kind: 'tie' })
+    expect(raceOutcome(ch, 88_000)).toEqual({ kind: 'won', diffSec: 12 })
+    expect(raceOutcome(ch, 105_500)).toEqual({ kind: 'lost', diffSec: 5 })
+  })
+
+  it('encodes a sub-second solve as a valid link', () => {
+    const token = encodeChallenge(3, [100, 200, 300, 400, 500])
+    expect(token).toBe('r3.0.0.0.0.1')
+    expect(decodeChallenge(token)).not.toBeNull()
+  })
+})
+
 describe('share text', () => {
   it('is spoiler-free and readable', () => {
     const text = shareText({
@@ -83,6 +107,14 @@ describe('share text', () => {
   it('splits boards into fifths', () => {
     expect(splitThresholds(25)).toEqual([5, 10, 15, 20, 25])
     expect(splitThresholds(32)).toEqual([7, 13, 20, 26, 32])
+  })
+})
+
+describe('labels', () => {
+  it('names squares for screen readers and dates for the archive', () => {
+    expect(squareLabel(0, 5, 5)).toBe('column A, row 5')
+    expect(squareLabel(24, 5, 5)).toBe('column E, row 1')
+    expect(shortDate('2026-09-27')).toBe('Sep 27')
   })
 })
 
