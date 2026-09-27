@@ -286,6 +286,19 @@ describe('player rules', () => {
     expect(divergenceIndex(game, p.solution.slice(0, 5))).toBe(-1)
   })
 
+  it('flags a square once every way in is used up', () => {
+    // 5x5, no holes: corner 0 connects only to 7 and 11.
+    const q: Puzzle = { id: 'strand', rows: 5, cols: 5, blocked: [], waypoints: [11, 24], solution: [] }
+    const g = makeGame(q)
+    // 11 -> 2 -> 13: square 0 still reachable via 7
+    expect(strandedCells(g, [11, 2, 13])).toEqual([])
+    // ... -> 4 -> 7: now 7 and 11 are both behind us and the knight on 7 can
+    // still reach 0, so it is not stranded yet
+    expect(strandedCells(g, [11, 2, 13, 4, 7])).toEqual([])
+    // one more jump away from 7 and the corner is cut off
+    expect(strandedCells(g, [11, 2, 13, 4, 7, 10])).toContain(0)
+  })
+
   it('flags stranded squares', () => {
     // Walk the solution; a correct prefix never strands anything.
     for (let i = 1; i <= p.solution.length; i++) {
