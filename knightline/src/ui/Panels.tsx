@@ -41,9 +41,10 @@ export function HowToPlay({
         </li>
       </ol>
       <p className="tip">
-        A square with only two ways in or out must use both, so corners are a good place to start thinking. A red
-        square is a dead end: tap an earlier square on your route to rewind.
+        Stuck? A corner has only two jumps, so the route must use both. A red square is a dead end: tap an earlier
+        square on your route to rewind.
       </p>
+      <p className="fine">A new puzzle every day at midnight. Every puzzle has exactly one solution.</p>
       <div className="row-actions">
         {variant === 'help' ? (
           <>
@@ -65,7 +66,6 @@ export function HowToPlay({
           </>
         )}
       </div>
-      <p className="fine">A new puzzle every day at midnight. Every puzzle has exactly one solution.</p>
     </div>
   )
 }
@@ -366,7 +366,7 @@ export function WinPanel({
           <p className="win-pace" aria-label="Your pace on each fifth of the route">
             {info.pace}
           </p>
-          <p className="fine pace-legend">Your pace on each fifth of the route: 🟩 quick · 🟨 steady · 🟥 slow</p>
+          <p className="fine pace-legend">One square per fifth of your route: 🟩 quick · 🟨 steady · 🟥 slow</p>
         </>
       )}
       {info.challengeResult && <p className="win-challenge">{info.challengeResult}</p>}
@@ -386,7 +386,7 @@ export function WinPanel({
         </button>
         {info.isDaily && (
           <button type="button" className="btn" onClick={onChallenge}>
-            Challenge a friend
+            Race a friend
           </button>
         )}
       </div>

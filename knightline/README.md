@@ -30,14 +30,16 @@ npm run build        # production build into dist/
 1. Pick symmetric blocked squares and find a random full knight route.
 2. Add numbered waypoints until the **logic solver** can finish the puzzle using only sound deductions (that proves the solution is unique), then remove every waypoint that isn't needed.
 3. Grade by the hardest technique needed: *forced* squares, *structure* (no loops, numbers in order), or *lookahead*.
-4. Re-prove everything offline with an **exhaustive exact search** before shipping.
+4. Measure how it *plays*: walk the solution and count the real choices a careful player faces (in bits of guessing). Each weekday has a window, so Monday stays gentle and Sunday stays a fight.
+5. Keep the calendar varied: no layout ever repeats, even rotated or mirrored.
+6. Re-prove everything offline with an **exhaustive exact search** before shipping.
 
 Both solvers are cross-checked against brute force on hundreds of small boards in `src/engine/engine.test.ts`.
 
 ## Content commands
 
 ```bash
-npm run content:generate   # regenerate all puzzle JSON (deterministic from seeds, ~80s)
+npm run content:generate   # regenerate all puzzle JSON (deterministic from seeds, ~20 min)
 npm run content:validate   # re-prove every puzzle: valid, unique, logic-solvable
 npm run content:report     # difficulty by weekday + sample boards
 ```
@@ -51,8 +53,8 @@ Optional build-time environment variables:
 - `VITE_PUBLIC_URL`: canonical URL used in share and race links (defaults to the current page URL).
 - `VITE_POSTHOG_KEY` / `VITE_POSTHOG_HOST`: turn on anonymous analytics for the playtest metrics in [docs/PLAYTEST.md](docs/PLAYTEST.md). Without a key, analytics are a no-op.
 
-`npm run build:artifact` packs everything into one HTML body (`dist-artifact/knightline.html`) for hosts that wrap pages themselves.
+`npm run build:artifact` packs everything, fonts included, into one HTML body (`dist-artifact/knightline.html`) for hosts that wrap pages themselves. Fonts are self-hosted (`src/fonts.css`), so neither build makes third-party requests.
 
 ## Status
 
-Web MVP complete: daily, archive, practice, tutorial, hints, share card with pace squares, ghost-race links, forgiving streaks, light/dark, keyboard play. Next: playtest (see [docs/PLAYTEST.md](docs/PLAYTEST.md)), then iOS.
+Web MVP complete: daily, archive, practice, tutorial, hints, instant dead-end warnings, rewind with undo, share card with pace squares, ghost-race links, forgiving streaks, midnight rollover, light/dark, keyboard play (U undo, H hint). Next: playtest (see [docs/PLAYTEST.md](docs/PLAYTEST.md)), then iOS.

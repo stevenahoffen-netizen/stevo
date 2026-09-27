@@ -701,24 +701,26 @@ function PlayView(props: PlayViewProps) {
 
       {target.mode === 'tutorial' && target.step !== undefined && (
         <aside className="coach">
-          <p className="coach-title">{LESSONS[target.step].title}</p>
+          <div className="coach-head">
+            <p className="coach-title">{LESSONS[target.step].title}</p>
+            <button
+              type="button"
+              className="link-btn"
+              onClick={() => {
+                save('tutorial-done', true)
+                goHome()
+              }}
+            >
+              Skip tutorial
+            </button>
+          </div>
           <p>{LESSONS[target.step].text(finishNum)}</p>
-          <button
-            type="button"
-            className="link-btn"
-            onClick={() => {
-              save('tutorial-done', true)
-              goHome()
-            }}
-          >
-            Skip tutorial
-          </button>
         </aside>
       )}
 
       {challenge && !data.solved && <GhostBar challenge={challenge} session={session} />}
 
-      <div className="board-slot">
+      <div className="board-slot" style={{ ['--rows' as string]: puzzle.rows, ['--cols' as string]: puzzle.cols }}>
         <Board
           puzzle={puzzle}
           route={route}

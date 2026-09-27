@@ -27,6 +27,8 @@
   --scrim: rgba(18, 24, 36, 0.42);
   --shadow: 0 1px 2px rgba(20, 28, 45, 0.07), 0 10px 30px rgba(20, 28, 45, 0.09);
   --radius: 12px;
+  /* widest the board can be: the app column minus its gutters */
+  --board-max: min(100vw - 32px, 528px);
 
   --font-display: 'Young Serif', Georgia, 'Times New Roman', serif;
   --font-ui: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
@@ -207,10 +209,12 @@ button {
   gap: 10px;
 }
 
-/* The board takes whatever height is left and stays square-celled. */
+/* The board takes whatever height is left (up to its full width) and stays
+   square-celled; spare height goes above the controls, near the thumbs. */
 .board-slot {
   flex: 1 1 0;
-  min-height: min(320px, 88vw);
+  min-height: min(260px, 80vw);
+  max-height: calc(var(--board-max) * var(--rows) / var(--cols));
   container-type: size;
   display: grid;
   place-items: center;
@@ -651,6 +655,7 @@ button {
 }
 
 .controls {
+  margin-top: auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
@@ -739,27 +744,36 @@ button {
   border: 1px solid var(--line);
   border-left: 3px solid var(--brass);
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 8px 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  font-size: 0.92rem;
+  line-height: 1.4;
 }
 
 .coach p {
   margin: 0;
 }
 
+.coach-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
 .coach-title {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
 
 .coach .link-btn {
-  align-self: flex-start;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 /* ------------------------------------------------------------ ghost race */
@@ -906,6 +920,21 @@ button {
 
 .row-actions .btn {
   flex: 1 1 140px;
+}
+
+/* The welcome is long on a phone: keep its buttons in view, stacked. */
+.howto .row-actions {
+  position: sticky;
+  bottom: -20px;
+  margin-inline: -20px;
+  margin-bottom: -20px;
+  padding: 12px 20px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.howto .row-actions .btn {
+  flex-basis: 100%;
 }
 
 .fine {
@@ -1355,6 +1384,9 @@ button {
 }
 
 @media (max-width: 340px) {
+  :root {
+    --board-max: calc(100vw - 24px);
+  }
   .app {
     padding-inline: 12px;
   }
@@ -1367,11 +1399,11 @@ button {
 }
 
 @media (min-width: 720px) and (min-height: 860px) {
-  .app {
-    max-width: 680px;
+  :root {
+    --board-max: min(100vw - 32px, 720px);
   }
-  .board {
-    max-width: 620px;
+  .app {
+    max-width: 752px;
   }
 }
 
